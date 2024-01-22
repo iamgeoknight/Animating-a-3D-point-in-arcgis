@@ -1,0 +1,453 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>NEOM</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #infoDiv {
+            background-color: white;
+            padding: 10px;
+            width: 260px;
+            margin: 5px;
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-size: 14px;
+        }
+
+        .geometry-options {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .geometry-button {
+            flex: 1;
+            border-style: solid;
+            border-width: 1px;
+            border-image: none;
+        }
+
+        .geometry-button-selected {
+            background: #4c4c4c;
+            color: #fff;
+        }
+
+        .options {
+            max-width: 260px;
+            width: 100%;
+            height: 25px;
+        }
+
+        #bufferNum {
+            width: 90%;
+            margin: 2.5em auto 0;
+        }
+
+        .esri-popup__main-container {
+            width: 300px !important;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.24/"></script>
+
+    <script>
+
+        require(["esri/rest/locator", "esri/Map", "esri/views/SceneView", "esri/layers/GroupLayer", "esri/layers/SceneLayer", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/widgets/Slider", "esri/widgets/BasemapGallery", "esri/rest/support/Query", "esri/core/promiseUtils", "esri/layers/FeatureLayer", "esri/symbols/PointSymbol3D", "esri/symbols/ObjectSymbol3DLayer"], (
+
+            locator,
+            Map,
+            SceneView,
+            GroupLayer,
+            SceneLayer,
+            GraphicsLayer,
+            Graphic,
+            Slider,
+            BasemapGallery,
+            Query,
+            promiseUtils,
+            FeatureLayer,
+            PointSymbol3D,
+            ObjectSymbol3DLayer
+
+        ) => {
+            const locatorUrl =
+                "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+
+            // Create Map
+            const map = new Map({
+                basemap: "streets-vector",
+                //   basemap: "topo-vector",
+                ground: "world-elevation"
+            });
+
+            // Create the SceneView
+            const view = new SceneView({
+                constraints: {
+                },
+                container: "viewDiv",
+                map: map,
+                viewingMode: "global",
+                camera: {
+                    position: {
+                        x: 34.71411545148914,
+                        y: 28.03992070711976,
+                        z: 729.5224018394947,
+                    },
+                    heading: 18.619670589842123,
+                    tilt: 56.59416471974285
+                }
+            });
+
+
+            let source = [34.717039487000079, 28.047631537000029], target = [34.717974193000032, 28.053278722000073];
+            let route_path = [[34.717039487000079, 28.047631537000029], [34.716920347000041, 28.047703109000054], [34.716880133000075, 28.047776044000045], [34.716962009000042, 28.047921023000072], [34.717146134000075, 28.048156319000043], [34.717164413000035, 28.048220572000048], [34.717097467000031, 28.048405412000079], [34.717023508000068, 28.048587819000034], [34.716931169000077, 28.048867793000056], [34.716894264000075, 28.049070808000067], [34.716903009000077, 28.049211586000069], [34.716970902000071, 28.049266299000067], [34.717250915000079, 28.049335469000027], [34.717537678000042, 28.049410987000044], [34.717986555000039, 28.049664981000035], [34.71832971200007, 28.049888538000062], [34.718717630000071, 28.050039884000057], [34.719130604000043, 28.050191447000032], [34.719421969000052, 28.050376870000036], [34.71986361200004, 28.050748567000028], [34.719979418000037, 28.050876910000056], [34.720003193000025, 28.05100200000004], [34.71996150800004, 28.051151730000072], [34.719869518000053, 28.051278370000034], [34.719646856000054, 28.05142481300004], [34.719517714000062, 28.05150237600003], [34.71950398000007, 28.051592593000066], [34.719531078000045, 28.051711780000062], [34.719420174000049, 28.051813158000073], [34.718957343000056, 28.052152589000059], [34.718786008000052, 28.052277840000045], [34.718577677000042, 28.052324555000041], [34.718463306000046, 28.052337886000032], [34.718357729000047, 28.05238483100004], [34.718084028000078, 28.052609004000033], [34.717885548000027, 28.052856441000074]];
+
+            let fill_color = "34, 139, 34";
+
+            let red_push = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">              
+                    <ellipse style="stroke: rgba(0, 0, 0, 0); stroke-width: 4px; fill: rgb(${fill_color});" cx="250" cy="250" rx="130" ry="130"/>              
+                </svg>
+            `;
+
+            let green_push = `        
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+                    <ellipse style="stroke: rgba(0, 0, 0, 0); stroke-width: 4px; fill: rgba(${fill_color}, 0.37);" cx="250" cy="250" rx="250" ry="250"/>
+                    <ellipse style="stroke: rgba(0, 0, 0, 0); stroke-width: 4px; fill: rgb(${fill_color});" cx="250" cy="250" rx="130" ry="130"/>
+                    <ellipse style="stroke: rgba(0, 0, 0, 0); stroke-width: 4px; fill: rgb(255, 255, 255);" cx="250" cy="250" rx="40" ry="40"/>
+                </svg>
+            `;
+
+            let marker = `
+                <svg width="203" height="136" viewBox="0 0 203 136" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g filter="url(#filter0_d_639_1715)">
+                <path d="M48 46H145C150.523 46 155 50.4772 155 56V76C155 81.5228 150.523 86 145 86H48V46Z" fill="white"/>
+                </g>
+                <g clip-path="url(#clip0_639_1715)">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M134.83 61.1324C134.635 60.9513 134.332 60.9566 134.144 61.1445C133.957 61.3324 133.951 61.6353 134.132 61.8297L139.395 67.0921L134.132 72.1703C133.951 72.3647 133.957 72.6676 134.144 72.8555C134.332 73.0434 134.635 73.0487 134.83 72.8676L140.697 67.0921L134.83 61.1324Z" fill="#77838F"/>
+                <path d="M62.1172 62.5977H63.4648L65.5977 65.9727L67.7363 62.5977H69.0781L66.2012 67.1621V71H65V67.1621L62.1172 62.5977ZM68.9141 69.6875C68.6562 69.2344 68.5273 68.7324 68.5273 68.1816C68.5273 67.627 68.6582 67.123 68.9199 66.6699C69.1855 66.2129 69.5391 65.8555 69.9805 65.5977C70.3867 65.3594 70.8457 65.2402 71.3574 65.2402C72.0371 65.2402 72.627 65.4531 73.127 65.8789V65.3574H74.2285V71H73.127V70.4844C72.6582 70.9062 72.084 71.1172 71.4043 71.1172C71.3965 71.1172 71.3906 71.1172 71.3867 71.1172C70.8594 71.1172 70.3867 70.9941 69.9688 70.748C69.5273 70.4902 69.1758 70.1367 68.9141 69.6875ZM70.1797 66.8691C69.8398 67.2324 69.6699 67.6699 69.6699 68.1816C69.6699 68.6934 69.8477 69.1309 70.2031 69.4941C70.5586 69.8574 71.0039 70.0391 71.5391 70.0391C72.1719 70.0391 72.6875 69.7715 73.0859 69.2363V67.1211C72.6797 66.5859 72.1445 66.3184 71.4805 66.3184C70.9531 66.3184 70.5195 66.502 70.1797 66.8691ZM76.6484 70.2793C76.0781 69.7207 75.793 69.0215 75.793 68.1816C75.793 67.3418 76.0723 66.6426 76.6309 66.084C77.1934 65.5215 77.8945 65.2402 78.7344 65.2402C79.2148 65.2402 79.666 65.3516 80.0879 65.5742C80.5137 65.793 80.8633 66.0898 81.1367 66.4648L80.293 67.1738C79.8867 66.6074 79.3672 66.3223 78.7344 66.3184C78.2227 66.3184 77.7949 66.4961 77.4512 66.8516C77.1074 67.2031 76.9355 67.6465 76.9355 68.1816C76.9355 68.7324 77.1113 69.1797 77.4629 69.5234C77.8145 69.8672 78.2617 70.0391 78.8047 70.0391C78.8086 70.0391 78.8125 70.0391 78.8164 70.0391C79.4609 70.0391 80.002 69.748 80.4395 69.166L81.3125 69.7988C81.082 70.1895 80.7344 70.5078 80.2695 70.7539C79.8047 70.9961 79.3164 71.1172 78.8047 71.1172C77.9414 71.1172 77.2227 70.8379 76.6484 70.2793ZM82.6367 71V62.4805H83.7793V65.8496C84.2598 65.4434 84.8105 65.2402 85.4316 65.2402C86.2793 65.2402 86.9629 65.5723 87.4824 66.2363C87.8496 66.7012 88.0352 67.3691 88.0391 68.2402V71H86.8965V68.1816C86.8965 67.5879 86.7852 67.1504 86.5625 66.8691C86.2734 66.502 85.8848 66.3184 85.3965 66.3184C84.7559 66.3184 84.2168 66.5859 83.7793 67.1211V71H82.6367ZM88.9414 66.3828V65.3574H90.3828V63.7988H91.5254V65.3574H93.3242V66.3828H91.5254V69.0195C91.5254 69.3711 91.5801 69.6113 91.6895 69.7402C91.8496 69.9395 92.1113 70.0391 92.4746 70.0391C92.7207 70.0391 92.9277 70.0156 93.0957 69.9688L93.3242 71C93.0859 71.0781 92.7891 71.1172 92.4336 71.1172C91.7617 71.1172 91.2305 70.8984 90.8398 70.4609C90.5352 70.125 90.3828 69.625 90.3828 68.9609V66.3828H88.9414ZM97.4023 66.7988C97.4023 65.584 97.8066 64.5605 98.6152 63.7285C99.4277 62.8965 100.439 62.4805 101.65 62.4805C102.252 62.4805 102.822 62.5957 103.361 62.8262C103.9 63.0527 104.354 63.3691 104.721 63.7754L103.918 64.5664C103.66 64.2852 103.326 64.0566 102.916 63.8809C102.51 63.7051 102.088 63.6172 101.65 63.6172C100.787 63.6172 100.062 63.9219 99.4766 64.5312C98.8906 65.1406 98.5977 65.8965 98.5977 66.7988C98.5977 67.7363 98.8984 68.502 99.5 69.0957C100.102 69.6855 100.854 69.9805 101.756 69.9805C102.709 69.9805 103.514 69.584 104.17 68.791L105.02 69.5586C104.652 70.0312 104.176 70.4102 103.59 70.6953C103.008 70.9766 102.396 71.1172 101.756 71.1172C100.498 71.1172 99.457 70.707 98.6328 69.8867C97.8125 69.0664 97.4023 68.0371 97.4023 66.7988ZM106.285 71V62.4805H107.428V71H106.285ZM109.344 68.2402V65.3574H110.48V68.4219C110.48 68.918 110.588 69.293 110.803 69.5469C111.076 69.875 111.441 70.0391 111.898 70.0391C112.5 70.0391 113.027 69.7715 113.48 69.2363V65.3574H114.623V71H113.516V70.4844C113.355 70.6445 113.127 70.791 112.83 70.9238C112.537 71.0527 112.215 71.1172 111.863 71.1172C111.031 71.1172 110.363 70.8027 109.859 70.1738C109.516 69.748 109.344 69.1035 109.344 68.2402ZM116.656 71V62.4805H117.799V65.8496C118.287 65.4434 118.863 65.2402 119.527 65.2402C120.039 65.2402 120.498 65.3594 120.904 65.5977C121.346 65.8555 121.697 66.2129 121.959 66.6699C122.225 67.123 122.357 67.627 122.357 68.1816C122.357 68.7324 122.227 69.2344 121.965 69.6875C121.707 70.1367 121.357 70.4902 120.916 70.748C120.502 70.9941 120.029 71.1172 119.498 71.1172C119.49 71.1172 119.484 71.1172 119.48 71.1172C118.801 71.1172 118.227 70.9062 117.758 70.4844V71H116.656ZM117.799 69.2363C118.197 69.7715 118.713 70.0391 119.346 70.0391C119.881 70.0391 120.326 69.8574 120.682 69.4941C121.037 69.1309 121.215 68.6934 121.215 68.1816C121.215 67.6699 121.045 67.2324 120.705 66.8691C120.365 66.502 119.932 66.3184 119.404 66.3184C118.74 66.3184 118.205 66.5859 117.799 67.1211V69.2363Z" fill="#1E2022"/>
+                </g>
+                <path d="M3 56C3 50.4772 7.47715 46 13 46H48V86H13C7.47715 86 3 81.5228 3 76V56Z" fill="#008000"/>
+                <g clip-path="url(#clip1_639_1715)">
+                <path d="M29.2381 63.256C29.2381 64.4933 28.9395 65.4427 28.3421 66.104C27.7235 66.808 26.8115 67.16 25.6061 67.16C24.1555 67.16 23.1208 66.6373 22.5021 65.592C22.0115 64.76 21.7661 63.544 21.7661 61.944C21.7661 60.1307 21.9848 58.7493 22.4221 57.8C23.0515 56.456 24.1608 55.784 25.7501 55.784C27.9155 55.784 29.0141 56.6853 29.0461 58.488C29.0461 58.4773 29.0355 58.6693 29.0141 59.064C28.7368 59.0213 28.3741 59 27.9261 59C27.4248 59 27.0248 59.0213 26.7261 59.064C26.7261 59.0427 26.7261 58.9573 26.7261 58.808C26.7048 57.944 26.3261 57.512 25.5901 57.512C25.0995 57.512 24.7528 57.7093 24.5501 58.104C24.4115 58.36 24.3155 58.792 24.2621 59.4C24.2515 59.6453 24.2195 60.0133 24.1661 60.504C24.1448 60.6213 24.1341 60.728 24.1341 60.824C24.1341 60.8773 24.1608 60.904 24.2141 60.904C24.2248 60.904 24.2675 60.8667 24.3421 60.792C24.4595 60.664 24.6355 60.504 24.8701 60.312C25.2221 60.1093 25.6808 60.008 26.2461 60.008C27.1528 60.008 27.8781 60.3013 28.4221 60.888C28.9661 61.4747 29.2381 62.264 29.2381 63.256ZM26.9821 63.544C26.9821 62.2747 26.5235 61.64 25.6061 61.64C25.3715 61.64 25.1208 61.704 24.8541 61.832C24.5875 61.9493 24.4061 62.0987 24.3101 62.28C24.2461 62.408 24.2195 62.6373 24.2301 62.968C24.2621 64.6427 24.7421 65.48 25.6701 65.48C26.5448 65.48 26.9821 64.8347 26.9821 63.544Z" fill="white"/>
+                <path d="M15.948 78V73.2979H16.866V73.752C16.9865 73.625 17.1753 73.5013 17.4324 73.3809C17.6896 73.2604 17.9614 73.2002 18.2479 73.2002C18.9217 73.2002 19.4751 73.4606 19.908 73.9814C20.4288 73.4606 21.0262 73.2002 21.7 73.2002C22.3934 73.2002 22.95 73.4639 23.3699 73.9912C23.6564 74.346 23.7996 74.8815 23.7996 75.5977V78H22.8475V75.4512C22.8475 75.0378 22.7579 74.7236 22.5789 74.5088C22.351 74.2354 22.0581 74.0986 21.7 74.0986C21.1792 74.0986 20.7023 74.3216 20.2693 74.7676C20.3214 75.015 20.3475 75.2917 20.3475 75.5977V78H19.4002V75.4512C19.4002 75.0378 19.309 74.7236 19.1268 74.5088C18.8989 74.2354 18.5962 74.0986 18.2186 74.0986C17.7173 74.0986 17.2778 74.3216 16.9002 74.7676V78H15.948ZM26.2305 72.0723C26.11 71.9518 26.0498 71.8053 26.0498 71.6328C26.0498 71.457 26.11 71.3073 26.2305 71.1836C26.3509 71.0599 26.4974 70.998 26.6699 70.998C26.8457 70.998 26.9938 71.0599 27.1143 71.1836C27.238 71.3073 27.2998 71.457 27.2998 71.6328C27.2998 71.8053 27.238 71.9518 27.1143 72.0723C26.9938 72.1895 26.8457 72.248 26.6699 72.248C26.4974 72.248 26.3509 72.1895 26.2305 72.0723ZM26.2012 78V73.2979H27.1533V78H26.2012ZM29.6477 78V73.2979H30.5656V73.752C30.9465 73.3841 31.4169 73.2002 31.9768 73.2002C32.6831 73.2002 33.2528 73.4769 33.6857 74.0303C33.9917 74.4176 34.1464 74.9743 34.1496 75.7002V78H33.1975V75.6514C33.1975 75.1566 33.1047 74.792 32.9191 74.5576C32.6783 74.2516 32.3544 74.0986 31.9475 74.0986C31.4136 74.0986 30.9644 74.3216 30.5998 74.7676V78H29.6477Z" fill="white"/>
+                </g>
+                <defs>
+                <filter id="filter0_d_639_1715" x="0" y="0" width="203" height="136" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                <feOffset dy="2"/>
+                <feGaussianBlur stdDeviation="24"/>
+                <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"/>
+                <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_639_1715"/>
+                <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_639_1715" result="shape"/>
+                </filter>
+                <clipPath id="clip0_639_1715">
+                <rect width="79" height="14" fill="white" transform="translate(62 59)"/>
+                </clipPath>
+                <clipPath id="clip1_639_1715">
+                <rect width="19" height="26" fill="white" transform="translate(16 53)"/>
+                </clipPath>
+                </defs>
+                </svg>
+            `;
+
+            let line = {
+                type: "polyline",
+                paths: route_path,
+            };
+
+            var pinSymbol = {
+                type: "point-3d",
+                symbolLayers: [{
+                    type: "icon",
+                    size: 15,
+                    resource: { primitive: "circle" },
+                    material: { color: "dodgerblue" }
+                }]
+            };
+
+            function boat_symbol(heading) {
+                return new PointSymbol3D({
+                    symbolLayers: [
+                        new ObjectSymbol3DLayer({
+                            resource: {
+                                // the dependencies referenced in the gltf file will be requested as well
+                                href: "Motorboat.glb"
+                            },
+                            width: 31,
+                            height: 64,
+                            depth: 96,
+                            heading: heading
+                        })
+                    ]
+                });
+            }
+
+            var movingPin = new Graphic({
+                symbol: boat_symbol(0),
+                geometry: {
+                    type: "point",
+                    x: source[0],
+                    y: source[1]
+                }
+            });
+
+            let route_graphicsLayer = new GraphicsLayer({
+                title: "Route",
+                graphics: [
+                    new Graphic({
+                        geometry: {
+                            type: "polyline",
+                            paths: route_path
+                        },
+
+                        symbol: {
+                            type: "simple-line", // autocasts as new SimpleFillSymbol
+                            color: [34, 139, 34],
+                            width: 4,
+                            cap: "round",
+                            join: "round"
+                        }
+                    }),
+                    new Graphic({
+                        geometry: {
+                            type: "point",
+                            x: source[0],
+                            y: source[1]
+                        },
+                        symbol: {
+                            type: "picture-marker",
+                            url: "data:image/svg+xml;base64," + window.btoa(red_push),
+                            width: `32px`,
+                            height: `32px`,
+                            xoffset: 0,
+                            yoffset: 15
+                        }
+                    }),
+                    new Graphic({
+                        geometry: {
+                            type: "point",
+                            x: target[0],
+                            y: target[1]
+                        },
+                        symbol: {
+                            type: "picture-marker",
+                            url: "data:image/svg+xml;base64," + window.btoa(green_push),
+                            width: `32px`,
+                            height: `32px`,
+                            xoffset: 0,
+                            yoffset: 15
+                        }
+                    }),
+
+                    new Graphic({
+                        geometry: {
+                            type: "point",
+                            x: target[0],
+                            y: target[1]
+                        },
+                        symbol: {
+                            type: "picture-marker",
+                            url: "data:image/svg+xml;base64," + window.btoa(marker),
+                            // width: `32px`,
+                            height: `200px`,
+                            xoffset: -5,
+                            yoffset: 20
+                        }
+                    }),
+                    movingPin
+                ]
+            });
+
+            view.map.add(route_graphicsLayer)
+            window.view = view;
+
+            function distance(pointA, pointB) {
+                const a = pointA[0] - pointB[0];
+                const b = pointA[1] - pointB[1];
+                return Math.sqrt(a * a + b * b);
+            }
+
+            function heading(pointA, pointB) {
+                const atan2 = Math.atan2(pointB[1] - pointA[1], pointB[0] - pointA[0]);
+                return (
+                    90 - atan2 * 180 / Math.PI
+                );
+            }
+
+            // Converts from degrees to radians.
+            function toRadians(degrees) {
+                return degrees * Math.PI / 180;
+            };
+
+            // Converts from radians to degrees.
+            function toDegrees(radians) {
+                return radians * 180 / Math.PI;
+            }
+
+            function bearing(startLat, startLng, destLat, destLng) {
+                //console.log(startLat, startLng, destLat, destLng)
+                startLat = toRadians(startLat);
+                startLng = toRadians(startLng);
+                destLat = toRadians(destLat);
+                destLng = toRadians(destLng);
+                //console.log(startLat, startLng, destLat, destLng)
+                let y = Math.sin(destLng - startLng) * Math.cos(destLat);
+                let x = Math.cos(startLat) * Math.sin(destLat) -
+                    Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
+                let brng = Math.atan2(y, x);
+                brng = toDegrees(brng);
+                return (brng + 360) % 360;
+            }
+
+            let mapInteractionFlag = false;
+
+            function animateLine(geometry) {
+                const AREA_ANIMATION_DURATION = 70000;
+                const path = geometry.paths;
+                const start = path[0];
+                const waypoints = path.slice(1);
+                waypoints.push(start);
+                const durations = [];
+                let totalLength = 0;
+
+                waypoints.forEach((point, index) => {
+                    const length = distance(point, path[index]);
+                    durations.push(length);
+                    totalLength += length;
+                });
+
+                durations.forEach((duration, index) => {
+                    durations[index] = duration * AREA_ANIMATION_DURATION / totalLength;
+                });
+
+                const paths = [start];
+                const movingPoint = {
+                    type: "point",
+                    x: start[0],
+                    y: start[1],
+                    z: 5
+                };
+
+                const initialDistance = distance(start, [
+                    view.camera.position.longitude,
+                    view.camera.position.latitude
+                ]);
+
+                function completeAnimation() {
+                    paths.push([movingPoint.x, movingPoint.y]);
+                }
+
+                let index = 0;
+                let startTime = null;
+                let previousPoint = null;
+                function step(timestamp) {
+                    if (durations.length <= index) {
+                        console.log("Completed animation");
+                        return;
+                    }
+
+                    if (!startTime) {
+                        startTime = timestamp;
+                        previousPoint = [movingPoint.x, movingPoint.y];
+                    }
+
+                    var progress = timestamp - startTime;
+                    const sp = Math.min(1.0, progress / durations[index]);
+                    movingPoint.x = previousPoint[0] + (waypoints[index][0] - previousPoint[0]) * sp;
+                    movingPoint.y = previousPoint[1] + (waypoints[index][1] - previousPoint[1]) * sp;
+                    movingPin.geometry = movingPoint;
+                    let heading_angle = bearing(previousPoint[1], previousPoint[0], movingPoint.y, movingPoint.x);
+                    movingPin.symbol = boat_symbol(heading_angle);
+
+                    if (paths.length < route_path.length - 1) {
+                        // createGraphic(paths.concat([[movingPoint.x, movingPoint.y]]));
+                        // Update camera
+                        const camera = view.camera.clone();
+                        // Position
+                        const currentDistance = distance(
+                            [movingPoint.x, movingPoint.y],
+                            [view.camera.position.longitude, view.camera.position.latitude]
+                        );
+                        const dX = movingPoint.x - camera.position.longitude;
+                        const dY = movingPoint.y - camera.position.latitude;
+
+                        camera.position.longitude =
+                            camera.position.longitude +
+                            dX * (currentDistance - initialDistance) / initialDistance;
+                        camera.position.latitude =
+                            camera.position.latitude +
+                            dY * (currentDistance - initialDistance) / initialDistance;
+                        // camera.position.z = camera.position.z + (elevation - previousElevation);
+
+                        // Heading
+                        camera.heading = heading(
+                            [view.camera.position.longitude, view.camera.position.latitude],
+                            [movingPoint.x, movingPoint.y]
+                        );
+                        view.camera = camera;
+                        // previousElevation = elevation;
+                    } else {
+                        mapInteractionFlag = false;
+                        return;
+                    }
+
+                    if (progress >= durations[index]) {
+                        completeAnimation();
+                        startTime = timestamp + (durations[index] - progress);
+                        previousPoint = [movingPoint.x, movingPoint.y];
+                        index++;
+                    }
+                    window.requestAnimationFrame(step);
+                }
+                window.requestAnimationFrame(step);
+            }
+
+            let enable_interaction = function () {
+                return true
+            }
+
+            view.on(["drag", "mouse-wheel"], (event) => {
+                if (mapInteractionFlag) {
+                    event.stopPropagation();
+                }
+            });
+
+            document.getElementById("navigate").addEventListener("click", () => {
+                mapInteractionFlag = true;
+                view.goTo({
+                    center: [route_path[0][0], route_path[0][1]],
+                });
+                setTimeout(() => {
+                    animateLine(
+                        {
+                            type: "polyline",
+                            paths: route_path
+                        }
+                    );
+                }, 1000);
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    <div id="navigate"
+        style="position: absolute; bottom: 20px; left: 0px; background: #969696; border-radius: 52px; cursor: pointer;">
+        Navigate</div>
+</body>
+
+</html>
